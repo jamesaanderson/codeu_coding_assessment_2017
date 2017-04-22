@@ -17,10 +17,13 @@ package com.google.codeu.codingchallenge;
 import java.io.IOException;
 
 final class MyJSONParser implements JSONParser {
-
   @Override
   public JSON parse(String in) throws IOException {
-    // TODO: implement this
+    MyJSONLexer lexer = new MyJSONLexer(in);
+    lexer.scan();
+
+    System.out.println(lexer.tokens);
+
     return new MyJSON();
   }
 }
