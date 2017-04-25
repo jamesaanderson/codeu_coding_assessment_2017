@@ -10,7 +10,7 @@ class MyJSONLexer {
   static enum TokenType {
     OBJOPEN("[{]"),
     OBJCLOSE("[}]"),
-    STRING("(?:[\"])(.*?)(?:[\"])"), // will not match escaped quotes etc
+    STRING("((?>\"(?>\\\\(?>[\"\\\\nt])|[^\"\\\\]+)*\"))"),
     COLON("[:]"),
     COMMA("[,]");
 
