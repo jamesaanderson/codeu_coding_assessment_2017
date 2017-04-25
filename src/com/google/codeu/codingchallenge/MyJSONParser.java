@@ -25,7 +25,7 @@ final class MyJSONParser implements JSONParser {
   }
 
   private ListIterator<MyJSONLexer.Token> iter;
-  private MyJSON obj;
+  private JSON obj;
 
   @Override
   public JSON parse(String in) throws IOException {
@@ -42,14 +42,20 @@ final class MyJSONParser implements JSONParser {
   }
 
   private JSON parseObj() throws IOException {
-    obj = new MyJSON();
+    obj = new MyJSON(); 
 
     if (iter.next().type == MyJSONLexer.TokenType.OBJCLOSE) { // empty object
       return obj; 
     }
 
     iter.previous();
-    return parseKeyVal();
+    JSON json = parseKeyVal();
+
+    if (iter.next().type == MyJSONLexer.TokenType.OBJCLOSE) {
+      return json; 
+    }
+
+    throw new ParseException("Missing }.");
   }
 
   private JSON parseKeyVal() throws IOException {
@@ -76,6 +82,7 @@ final class MyJSONParser implements JSONParser {
         return parseKeyVal();
       } 
 
+      this.iter.previous();
       return obj;
     }
     
