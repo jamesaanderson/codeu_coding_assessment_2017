@@ -15,15 +15,70 @@
 package com.google.codeu.codingchallenge;
 
 import java.io.IOException;
+import java.util.ListIterator;
 
 final class MyJSONParser implements JSONParser {
+  class ParseException extends IOException {
+    ParseException(String msg) {
+      super(msg);
+    } 
+  }
+
+  private ListIterator<MyJSONLexer.Token> iter;
+  private MyJSON obj;
+
   @Override
   public JSON parse(String in) throws IOException {
     MyJSONLexer lexer = new MyJSONLexer(in);
     lexer.scan();
 
-    System.out.println(lexer.tokens);
+    iter = lexer.tokens.listIterator();
 
-    return new MyJSON();
+    if (iter.next().type == MyJSONLexer.TokenType.OBJOPEN) {
+      return parseObj();
+    } else {
+      throw new ParseException("No object defined."); 
+    }
+  }
+
+  private JSON parseObj() throws IOException {
+    obj = new MyJSON();
+
+    if (iter.next().type == MyJSONLexer.TokenType.OBJCLOSE) { // empty object
+      return obj; 
+    }
+
+    iter.previous();
+    return parseKeyVal();
+  }
+
+  private JSON parseKeyVal() throws IOException {
+    MyJSONLexer.Token key = iter.next();
+
+    if (key.type == MyJSONLexer.TokenType.STRING && iter.next().type == MyJSONLexer.TokenType.COLON) {
+      return parseVal(key);
+    }
+
+    throw new ParseException("Missing key or }.");
+  }
+
+  private JSON parseVal(MyJSONLexer.Token key) throws IOException {
+    MyJSONLexer.Token val = iter.next();
+
+    if (val.type == MyJSONLexer.TokenType.OBJOPEN) {
+      return obj.setObject(key.value, parseObj());
+    }
+    
+    if (val.type == MyJSONLexer.TokenType.STRING) {
+      obj.setString(key.value, val.value);
+
+      if (this.iter.next().type == MyJSONLexer.TokenType.COMMA) {
+        return parseKeyVal();
+      } 
+
+      return obj;
+    }
+    
+    throw new ParseException("Missing value."); 
   }
 }

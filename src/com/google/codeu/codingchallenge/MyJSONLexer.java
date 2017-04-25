@@ -1,14 +1,18 @@
 package com.google.codeu.codingchallenge;
 
-import java.util.*;
 import java.util.regex.*;
+import java.util.ArrayList;
+import java.io.IOException;
 
 class MyJSONLexer {
   String in;
 
   static enum TokenType {
     OBJOPEN("[{]"),
-    OBJCLOSE("[}]");
+    OBJCLOSE("[}]"),
+    STRING("(?:[\"])(.*?)(?:[\"])"), // will not match escaped quotes etc
+    COLON("[:]"),
+    COMMA("[,]");
 
     final String pattern;
 
@@ -28,7 +32,7 @@ class MyJSONLexer {
 
     @Override
     public String toString() {
-      return this.type + " " + this.value;
+      return type + " " + value;
     }
   }
 
@@ -38,7 +42,7 @@ class MyJSONLexer {
     this.in = in;
   }
 
-  void scan() {
+  void scan() throws IOException {
     StringBuffer patternBuffer = new StringBuffer();
     for (TokenType token: TokenType.values()) {
       patternBuffer.append("(?<" + token.name() + ">" + token.pattern + ")|");
@@ -47,13 +51,19 @@ class MyJSONLexer {
     String pattern = patternBuffer.toString();
 
     Pattern r = Pattern.compile(pattern);
-    Matcher m  = r.matcher(this.in);
+    Matcher m  = r.matcher(in);
 
     while (m.find()) {
       for (TokenType token: TokenType.values()) {
-        if (m.group(token.name()) != null) {
-          this.tokens.add(new Token(token, m.group(token.name())));
-        } 
+        String value = m.group(token.name());
+
+        if (value != null) {
+          if (token == TokenType.STRING) {
+            value = value.substring(1, value.length()-1); // remove quotes at beginning and end
+          }
+
+          tokens.add(new Token(token, value));
+        }
       } 
     }
   }
