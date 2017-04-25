@@ -16,6 +16,7 @@ package com.google.codeu.codingchallenge;
 
 import java.io.IOException;
 import java.util.ListIterator;
+import java.util.Stack;
 
 final class MyJSONParser implements JSONParser {
   class ParseException extends IOException {
@@ -25,7 +26,7 @@ final class MyJSONParser implements JSONParser {
   }
 
   private ListIterator<MyJSONLexer.Token> iter;
-  private JSON obj;
+  private Stack<JSON> objStack = new Stack<JSON>();
 
   @Override
   public JSON parse(String in) throws IOException {
@@ -35,27 +36,39 @@ final class MyJSONParser implements JSONParser {
     iter = lexer.tokens.listIterator();
 
     if (iter.next().type == MyJSONLexer.TokenType.OBJOPEN) {
-      return parseObj();
+      return parseObjNull();
     } else {
       throw new ParseException("No object defined."); 
     }
   }
 
   private JSON parseObj() throws IOException {
-    obj = new MyJSON(); 
-
     if (iter.next().type == MyJSONLexer.TokenType.OBJCLOSE) { // empty object
-      return obj; 
+      return objStack.peek(); 
     }
 
     iter.previous();
-    JSON json = parseKeyVal();
+    JSON obj = parseKeyVal();
 
-    if (iter.next().type == MyJSONLexer.TokenType.OBJCLOSE) {
-      return json; 
+    MyJSONLexer.Token sym = iter.next();
+
+    if (sym.type == MyJSONLexer.TokenType.OBJCLOSE) {
+      return obj; 
+    }
+    
+    if (sym.type == MyJSONLexer.TokenType.COMMA) {
+      objStack.pop();
+
+      return parseObj();
     }
 
-    throw new ParseException("Missing }.");
+    throw new ParseException("Invalid JSON-lite syntax.");
+  }
+
+  private JSON parseObjNull() throws IOException {
+    objStack.push(new MyJSON());
+
+    return parseObj();
   }
 
   private JSON parseKeyVal() throws IOException {
@@ -72,18 +85,18 @@ final class MyJSONParser implements JSONParser {
     MyJSONLexer.Token val = iter.next();
 
     if (val.type == MyJSONLexer.TokenType.OBJOPEN) {
-      return obj.setObject(key.value, parseObj());
+      return objStack.peek().setObject(key.value, parseObjNull());
     }
     
     if (val.type == MyJSONLexer.TokenType.STRING) {
-      obj.setString(key.value, val.value);
+      objStack.peek().setString(key.value, val.value);
 
       if (this.iter.next().type == MyJSONLexer.TokenType.COMMA) {
         return parseKeyVal();
       } 
 
       this.iter.previous();
-      return obj;
+      return objStack.peek();
     }
     
     throw new ParseException("Missing value."); 

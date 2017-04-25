@@ -18,33 +18,33 @@ import java.util.Collection;
 import java.util.HashMap;
 
 final class MyJSON implements JSON {
-  private HashMap<String, Object> json = new HashMap<String, Object>();
+  private HashMap<String, Object> map = new HashMap<String, Object>();
 
   @Override
   public JSON getObject(String name) {
-    return (JSON) json.get(name);
+    return (JSON) map.get(name);
   }
 
   @Override
   public JSON setObject(String name, JSON value) {
-    json.put(name, value);
+    map.put(name, value);
     return this;
   }
 
   @Override
   public String getString(String name) {
-    return (String) json.get(name);
+    return (String) map.get(name);
   }
 
   @Override
   public JSON setString(String name, String value) {
-    json.put(name, value);
+    map.put(name, value);
     return this;
   }
 
   @Override
   public void getObjects(Collection<String> names) {
-    for (HashMap.Entry<String, Object> entry: json.entrySet()) {
+    for (HashMap.Entry<String, Object> entry: map.entrySet()) {
       if (entry.getValue() instanceof JSON) {
         names.add(entry.getKey());
       }
@@ -53,7 +53,7 @@ final class MyJSON implements JSON {
 
   @Override
   public void getStrings(Collection<String> names) {
-    for (HashMap.Entry<String, Object> entry: json.entrySet()) {
+    for (HashMap.Entry<String, Object> entry: map.entrySet()) {
       if (entry.getValue() instanceof String) {
         names.add(entry.getKey());
       }
